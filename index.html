@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Formulier Scanner - Gecorrigeerd</title>
+    <title>AI Formulier Scanner - Nieuwe Pagina</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; color: #333; }
         h2 { color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
@@ -92,16 +92,12 @@
                     generationConfig: { responseMimeType: "application/json" }
                 };
 
-                // DE FIX: De URL is nu 100% statisch en onveranderlijk.
-                // De API-sleutel wordt veilig meegestuurd via de HTTP-header (x-goog-api-key)
-                var url = "https://googleapis.com";
+                // Correcte URL naar de Google API
+                var url = "https://googleapis.com" + apiKey;
 
                 var response = await fetch(url, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-goog-api-key': apiKey
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
