@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Formulier Scanner v3</title>
+    <title>AI Formulier Scanner Werkend</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -97,7 +97,6 @@
     </div>
 
     <script>
-        // Laad opgeslagen sleutel bij opstarten
         document.addEventListener("DOMContentLoaded", function() {
             var savedKey = localStorage.getItem("gemini_api_key");
             if (savedKey) {
@@ -110,7 +109,7 @@
                 var reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = function() {
-                    var base64String = reader.result.split(',')[1]; // Pak alleen de pure data string
+                    var base64String = reader.result.split(',')[1]; // Pak strikt alleen het data-gedeelte
                     resolve(base64String);
                 };
                 reader.onerror = function(error) { reject(error); };
@@ -168,12 +167,8 @@
                     }
                 };
 
-                // UITGEBREIDE VEILIGHEIDSMETHODE VOOR DE URL:
-                // We dwingen de browser via ingebouwde functies om de URL correct op te bouwen
-                var baseUrl = "https://googleapis.com";
-                var urlParams = new URLSearchParams();
-                urlParams.append("key", apiKey);
-                var volledigeApiUrl = baseUrl + "?" + urlParams.toString();
+                // DE VOLLEDIGE EN EXACTE GOOGLE GEMINI ENDPOINT URL:
+                var volledigeApiUrl = "https://googleapis.com" + apiKey;
 
                 var response = await fetch(volledigeApiUrl, {
                     method: 'POST',
@@ -205,10 +200,6 @@
                 loadingText.style.display = 'none';
             }
         }
-    </script>
-</body>
-</html>
-
     </script>
 </body>
 </html>
