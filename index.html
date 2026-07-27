@@ -3,38 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Formulier Scanner Werkend</title>
+    <title>AI Formulier Scanner - Gecorrigeerd</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            max-width: 600px; 
-            margin: 40px auto; 
-            padding: 20px; 
-            background-color: #f4f7f6;
-            color: #333;
-        }
+        body { font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; color: #333; }
         h2 { color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; }
-        input[type="text"], input[type="password"] { 
-            width: 100%; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            box-sizing: border-box; 
-            font-size: 14px;
-        }
-        button { 
-            background-color: #28a745; 
-            color: white; 
-            padding: 12px 20px; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            font-weight: bold;
-            width: 100%;
-        }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        button { background-color: #28a745; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         #loading { color: #666; display: none; margin-top: 12px; font-weight: bold; text-align: center; }
         .setup-box { background: #fff; padding: 20px; border-radius: 6px; border-left: 5px solid #007bff; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -47,7 +23,7 @@
         <h2>1. Instellingen</h2>
         <div class="form-group">
             <label for="apiKeyInput">Jouw Gemini API Sleutel:</label>
-            <input type="password" id="apiKeyInput" placeholder="Plak hier je Gemini API sleutel (begint met AQ.)">
+            <input type="password" id="apiKeyInput" placeholder="Plak hier je Gemini API sleutel">
         </div>
     </div>
 
@@ -81,7 +57,7 @@
             return new Promise(function(resolve, reject) {
                 var reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = function() { resolve(reader.result.split(',')[1]); }; // Fix: pak strikt alleen de base64 string
+                reader.onload = function() { resolve(reader.result.split(',')[1]); };
                 reader.onerror = function(error) { reject(error); };
             });
         }
@@ -102,26 +78,30 @@
             loadingText.style.display = 'block';
 
             try {
-                var selectedFile = fileInput.files[0];
-                var base64Data = await fileToBase64(selectedFile);
-                var promptTekst = "Analyseer dit document en geef de tekst strikt terug in dit JSON-formaat: {\"naam\":\"\",\"geboortedatum\":\"\",\"adres\":\"\",\"telefoon\":\"\",\"serienummer\":\"\",\"id_nummer\":\"\"}";
+                var file = fileInput.files[0];
+                var base64Data = await fileToBase64(file);
+                var promptTekst = "Analyseer dit document en geef de data strikt terug in dit JSON-formaat: {\"naam\":\"\",\"geboortedatum\":\"\",\"adres\":\"\",\"telefoon\":\"\",\"serienummer\":\"\",\"id_nummer\":\"\"}";
 
                 var payload = {
                     contents: [{
                         parts: [
                             { text: promptTekst },
-                            { inlineData: { mimeType: selectedFile.type, data: base64Data } }
+                            { inlineData: { mimeType: file.type, data: base64Data } }
                         ]
                     }],
                     generationConfig: { responseMimeType: "application/json" }
                 };
 
-                // URL opbouw met encodeURIComponent zorgt dat de 'AQ.' sleutel correct verwerkt wordt
-                var url = "https://googleapis.com" + encodeURIComponent(apiKey);
+                // DE FIX: De URL is nu 100% statisch en onveranderlijk.
+                // De API-sleutel wordt veilig meegestuurd via de HTTP-header (x-goog-api-key)
+                var url = "https://googleapis.com";
 
                 var response = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': apiKey
+                    },
                     body: JSON.stringify(payload)
                 });
 
@@ -139,7 +119,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert('Fout: ' + error.message);
+                alert('Fout tijdens scannen: ' + error.message);
             } finally {
                 scanButton.disabled = false;
                 loadingText.style.display = 'none';
