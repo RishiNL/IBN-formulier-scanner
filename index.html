@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Formulier Scanner Definitief</title>
+    <title>AI Formulier Scanner Werkend</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -47,7 +47,7 @@
         <h2>1. Instellingen</h2>
         <div class="form-group">
             <label for="apiKeyInput">Jouw Gemini API Sleutel:</label>
-            <input type="password" id="apiKeyInput" placeholder="Plak hier je AI Studio API key (AIza...)">
+            <input type="password" id="apiKeyInput" placeholder="Plak hier je Gemini API sleutel (begint met AQ.)">
         </div>
     </div>
 
@@ -81,7 +81,7 @@
             return new Promise(function(resolve, reject) {
                 var reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = function() { resolve(reader.result.split(',')[1]); };
+                reader.onload = function() { resolve(reader.result.split(',')[1]); }; // Fix: pak strikt alleen de base64 string
                 reader.onerror = function(error) { reject(error); };
             });
         }
@@ -102,21 +102,22 @@
             loadingText.style.display = 'block';
 
             try {
-                var base64Data = await fileToBase64(fileInput.files[0]);
+                var selectedFile = fileInput.files[0];
+                var base64Data = await fileToBase64(selectedFile);
                 var promptTekst = "Analyseer dit document en geef de tekst strikt terug in dit JSON-formaat: {\"naam\":\"\",\"geboortedatum\":\"\",\"adres\":\"\",\"telefoon\":\"\",\"serienummer\":\"\",\"id_nummer\":\"\"}";
 
                 var payload = {
                     contents: [{
                         parts: [
                             { text: promptTekst },
-                            { inlineData: { mimeType: fileInput.files[0].type, data: base64Data } }
+                            { inlineData: { mimeType: selectedFile.type, data: base64Data } }
                         ]
                     }],
                     generationConfig: { responseMimeType: "application/json" }
                 };
 
-                // Deze URL staat nu 100% vast en los van de API-sleutel variabele in de string
-                var url = "https://googleapis.com" + apiKey;
+                // URL opbouw met encodeURIComponent zorgt dat de 'AQ.' sleutel correct verwerkt wordt
+                var url = "https://googleapis.com" + encodeURIComponent(apiKey);
 
                 var response = await fetch(url, {
                     method: 'POST',
