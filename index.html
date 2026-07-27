@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Formulier Scanner Werkend</title>
+    <title>AI Formulier Scanner Definitief</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -24,11 +24,6 @@
             box-sizing: border-box; 
             font-size: 14px;
         }
-        input[type="text"]:focus, input[type="password"]:focus {
-            border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 5px rgba(0,123,255,0.2);
-        }
         button { 
             background-color: #28a745; 
             color: white; 
@@ -39,9 +34,7 @@
             font-size: 16px; 
             font-weight: bold;
             width: 100%;
-            transition: background 0.2s;
         }
-        button:hover { background-color: #218838; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         #loading { color: #666; display: none; margin-top: 12px; font-weight: bold; text-align: center; }
         .setup-box { background: #fff; padding: 20px; border-radius: 6px; border-left: 5px solid #007bff; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -61,57 +54,34 @@
     <div class="main-form">
         <h2>2. Foto Scannen</h2>
         <div class="form-group">
-            <label for="fotoInput">Selecteer of maak een foto van een document/label:</label>
+            <label for="fotoInput">Selecteer of maak een foto van een document:</label>
             <input type="file" id="fotoInput" accept="image/*">
         </div>
         <button id="scanButton" onclick="scanFotoDirect()">Scan Foto & Vul In</button>
-        <div id="loading">AI analyseert de foto... Een moment geduld.</div>
+        <div id="loading">AI verwerkt de foto...</div>
 
         <h2>3. Resultaat</h2>
         <form id="doelFormulier">
-            <div class="form-group">
-                <label for="naam">Volledige naam:</label>
-                <input type="text" id="naam">
-            </div>
-            <div class="form-group">
-                <label for="geboortedatum">Geboortedatum:</label>
-                <input type="text" id="geboortedatum">
-            </div>
-            <div class="form-group">
-                <label for="adres">Adres:</label>
-                <input type="text" id="adres">
-            </div>
-            <div class="form-group">
-                <label for="telefoon">Telefoonnummer:</label>
-                <input type="text" id="telefoon">
-            </div>
-            <div class="form-group">
-                <label for="serienummer">Serienummer:</label>
-                <input type="text" id="serienummer">
-            </div>
-            <div class="form-group">
-                <label for="id_nummer">ID-nummer / Documentnummer:</label>
-                <input type="text" id="id_nummer">
-            </div>
+            <div class="form-group"><label for="naam">Volledige naam:</label><input type="text" id="naam"></div>
+            <div class="form-group"><label for="geboortedatum">Geboortedatum:</label><input type="text" id="geboortedatum"></div>
+            <div class="form-group"><label for="adres">Adres:</label><input type="text" id="adres"></div>
+            <div class="form-group"><label for="telefoon">Telefoonnummer:</label><input type="text" id="telefoon"></div>
+            <div class="form-group"><label for="serienummer">Serienummer:</label><input type="text" id="serienummer"></div>
+            <div class="form-group"><label for="id_nummer">ID-nummer:</label><input type="text" id="id_nummer"></div>
         </form>
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             var savedKey = localStorage.getItem("gemini_api_key");
-            if (savedKey) {
-                document.getElementById('apiKeyInput').value = savedKey;
-            }
+            if (savedKey) { document.getElementById('apiKeyInput').value = savedKey; }
         });
 
         function fileToBase64(file) {
             return new Promise(function(resolve, reject) {
                 var reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = function() {
-                    var base64String = reader.result.split(',')[1]; // Pak strikt alleen het data-gedeelte
-                    resolve(base64String);
-                };
+                reader.onload = function() { resolve(reader.result.split(',')[1]); };
                 reader.onerror = function(error) { reject(error); };
             });
         }
@@ -122,68 +92,42 @@
             var scanButton = document.getElementById('scanButton');
             var loadingText = document.getElementById('loading');
 
-            if (!apiKey) {
-                alert('Vul eerst je Gemini API-sleutel in.');
-                return;
-            }
-            if (fileInput.files.length === 0) {
-                alert('Selecteer of maak eerst een foto.');
+            if (!apiKey || fileInput.files.length === 0) {
+                alert('Vul je sleutel in en selecteer een foto.');
                 return;
             }
 
             localStorage.setItem("gemini_api_key", apiKey);
-
-            var file = fileInput.files[0];
             scanButton.disabled = true;
             loadingText.style.display = 'block';
 
             try {
-                var base64Data = await fileToBase64(file);
-
-                var promptTekst = "Analyseer deze afbeelding van een document. Haal de gevraagde gegevens op en geef ze STRICT terug in het volgende JSON-formaat. Als een veld niet op de foto staat, laat de waarde dan leeg (\"\"). Vul geen fictieve gegevens in.\n\n" +
-                "{\n" +
-                "  \"naam\": \"Volledige naam\",\n" +
-                "  \"geboortedatum\": \"Geboortedatum\",\n" +
-                "  \"adres\": \"Adres\",\n" +
-                "  \"telefoon\": \"Telefoonnummer\",\n" +
-                "  \"serienummer\": \"Serienummer\",\n" +
-                "  \"id_nummer\": \"ID-nummer\"\n" +
-                "}";
+                var base64Data = await fileToBase64(fileInput.files[0]);
+                var promptTekst = "Analyseer dit document en geef de tekst strikt terug in dit JSON-formaat: {\"naam\":\"\",\"geboortedatum\":\"\",\"adres\":\"\",\"telefoon\":\"\",\"serienummer\":\"\",\"id_nummer\":\"\"}";
 
                 var payload = {
                     contents: [{
                         parts: [
                             { text: promptTekst },
-                            {
-                                inlineData: {
-                                    mimeType: file.type,
-                                    data: base64Data
-                                }
-                            }
+                            { inlineData: { mimeType: fileInput.files[0].type, data: base64Data } }
                         ]
                     }],
-                    generationConfig: {
-                        responseMimeType: "application/json"
-                    }
+                    generationConfig: { responseMimeType: "application/json" }
                 };
 
-                // DE VOLLEDIGE EN EXACTE GOOGLE GEMINI ENDPOINT URL:
-                var volledigeApiUrl = "https://googleapis.com" + apiKey;
+                // Deze URL staat nu 100% vast en los van de API-sleutel variabele in de string
+                var url = "https://googleapis.com" + apiKey;
 
-                var response = await fetch(volledigeApiUrl, {
+                var response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 var resultaat = await response.json();
+                if (!response.ok) { throw new Error(resultaat.error?.message || 'API Fout'); }
 
-                if (!response.ok) {
-                    throw new Error(resultaat.error?.message || 'Fout bij de AI verbinding.');
-                }
-
-                var aiTekstOutput = resultaat.candidates[0].content.parts[0].text;
-                var data = JSON.parse(aiTekstOutput);
+                var data = JSON.parse(resultaat.candidates[0].content.parts[0].text);
 
                 document.getElementById('naam').value = data.naam || '';
                 document.getElementById('geboortedatum').value = data.geboortedatum || '';
@@ -194,7 +138,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert('Er ging iets mis tijdens het scannen: ' + error.message);
+                alert('Fout: ' + error.message);
             } finally {
                 scanButton.disabled = false;
                 loadingText.style.display = 'none';
