@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Formulier Scanner - Nieuwe Pagina</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; color: #333; }
+        h2 { color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        button { background-color: #28a745; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #loading { color: #666; display: none; margin-top: 12px; font-weight: bold; text-align: center; }
+        .setup-box { background: #fff; padding: 20px; border-radius: 6px; border-left: 5px solid #007bff; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .main-form { background: #fff; padding: 25px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <div class="setup-box">
+        <h2>1. Instellingen</h2>
+        <div class="form-group">
+            <label for="apiKeyInput">Jouw Gemini API Sleutel:</label>
+            <input type="password" id="apiKeyInput" placeholder="Plak hier je Gemini API sleutel">
+        </div>
+    </div>
+
+    <div class="main-form">
+        <h2>2. Foto Scannen</h2>
+        <div class="form-group">
+            <label for="fotoInput">Selecteer of maak een foto van een document:</label>
+            <input type="file" id="fotoInput" accept="image/*">
+        </div>
+        <button id="scanButton" onclick="scanFotoDirect()">Scan Foto & Vul In</button>
+        <div id="loading">AI verwerkt de foto...</div>
+
+        <h2>3. Resultaat</h2>
+        <form id="doelFormulier">
+            <div class="form-group"><label for="naam">Volledige naam:</label><input type="text" id="naam"></div>
+            <div class="form-group"><label for="geboortedatum">Geboortedatum:</label><input type="text" id="geboortedatum"></div>
+            <div class="form-group"><label for="adres">Adres:</label><input type="text" id="adres"></div>
+            <div class="form-group"><label for="telefoon">Telefoonnummer:</label><input type="text" id="telefoon"></div>
+            <div class="form-group"><label for="serienummer">Serienummer:</label><input type="text" id="serienummer"></div>
+            <div class="form-group"><label for="id_nummer">ID-nummer:</label><input type="text" id="id_nummer"></div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var savedKey = localStorage.getItem("gemini_api_key");
+            if (savedKey) { document.getElementById('apiKeyInput').value = savedKey; }
+        });
+
+        function fileToBase64(file) {
+            return new Promise(function(resolve, reject) {
+                var reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function() { resolve(reader.result.split(',')[1]); };
+                reader.onerror = function(error) { reject(error); };
+            });
+        }
+
+        async function scanFotoDirect() {
+            var fileInput = document.getElementById('fotoInput');
+            var apiKey = document.getElementById('apiKeyInput').value.trim();
+            var scanButton = document.getElementById('scanButton');
+            var loadingText = document.getElementById('loading');
+
+            if (!apiKey || fileInput.files.length === 0) {
+                alert('Vul je sleutel in en selecteer een foto.');
+                return;
+            }
+
+            localStorage.setItem("gemini_api_key", apiKey);
+            scanButton.disabled = true;
+            loadingText.style.display = 'block';
+
+            try {
+                var file = fileInput.files[0];
+                var base64Data = await fileToBase64(file);
+                var promptTekst = "Analyseer dit document en geef de data strikt terug in dit JSON-formaat: {\"naam\":\"\",\"geboortedatum\":\"\",\"adres\":\"\",\"telefoon\":\"\",\"serienummer\":\"\",\"id_nummer\":\"\"}";
+
+                var payload = {
+                    contents: [{
+                        parts: [
+                            { text: promptTekst },
+                            { inlineData: { mimeType: file.type, data: base64Data } }
+                        ]
+                    }],
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                // Correcte URL naar de Google API
+                var url = "https://googleapis.com" + apiKey;
+
+                var response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                var resultaat = await response.json();
+                if (!response.ok) { throw new Error(resultaat.error?.message || 'API Fout'); }
+
+                var data = JSON.parse(resultaat.candidates[0].content.parts[0].text);
+
+                document.getElementById('naam').value = data.naam || '';
+                document.getElementById('geboortedatum').value = data.geboortedatum || '';
+                document.getElementById('adres').value = data.adres || '';
+                document.getElementById('telefoon').value = data.telefoon || '';
+                document.getElementById('serienummer').value = data.serienummer || '';
+                document.getElementById('id_nummer').value = data.id_nummer || '';
+
+            } catch (error) {
+                console.error(error);
+                alert('Fout tijdens scannen: ' + error.message);
+            } finally {
+                scanButton.disabled = false;
+                loadingText.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
