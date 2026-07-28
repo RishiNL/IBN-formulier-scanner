@@ -6,8 +6,8 @@
     <title>Lok Installaties - AI Formulier Scanner</title>
     <style>
         :root {
-            --lok-blue: #002e5d; /* Huisstijl blauw */
-            --lok-green: #2e7d32; /* Duurzaam groen accent */
+            --lok-blue: #002e5d;
+            --lok-green: #2e7d32;
             --lok-gray: #f4f7f6;
         }
         body { 
@@ -116,18 +116,16 @@
     </div>
 
     <script>
-        // Automatisch de opgeslagen sleutel ophalen bij openen
         document.addEventListener("DOMContentLoaded", function() {
             var savedKey = localStorage.getItem("lok_secure_key");
             if (savedKey) { document.getElementById('apiKeyInput').value = savedKey; }
         });
 
-        // Veilig omzetten naar Base64 string (Fix voor parameter 1 is not of type 'Blob')
         function fileToBase64(file) {
             return new Promise(function(resolve, reject) {
                 var reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = function() { resolve(reader.result.split(',')[1]); }; // Pak puur en alleen de data
+                reader.onload = function() { resolve(reader.result.split(',')[1]); }; // Pak strikt ALLEEN de ruwe Base64 data string
                 reader.onerror = function(error) { reject(error); };
             });
         }
@@ -143,15 +141,13 @@
             if (!cleanKey) { alert('Vul eerst je Gemini API-sleutel in bij stap 1.'); return; }
             if (!fileInput.files || fileInput.files.length === 0) { alert('Selecteer eerst een foto.'); return; }
 
-            // Sla de sleutel veilig op in de browsercache
             localStorage.setItem("lok_secure_key", cleanKey);
             
             scanBtn.disabled = true;
             loadingText.style.display = 'block';
 
             try {
-                // OMZEILING & FIX: Pak specifiek de eerste geselecteerde foto uit de lijst [0]
-                var targetFile = fileInput.files[0]; 
+                var targetFile = fileInput.files[0]; // Fix: Pak exact het eerste bestand uit de lijst
                 var base64Data = await fileToBase64(targetFile);
 
                 var promptTekst = "Analyseer dit document. Haal de gevraagde gegevens op en geef ze ALTIJD terug in dit exacte JSON-formaat: " +
@@ -168,25 +164,21 @@
                     generationConfig: { responseMimeType: "application/json" }
                 };
 
-                // OMZEILING: De URL is 100% statisch. Geen risico op foutieve string-koppelingen.
-                var url = "https://googleapis.com";
+                // DE DEFINITIEVE LINK: Geen custom headers meer, de sleutel staat direct achter de juiste Google URL
+                var url = "https://googleapis.com" + cleanKey;
 
                 var response = await fetch(url, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-goog-api-key': cleanKey // Sleutel wordt veilig via de HTTP-header meegestuurd
-                    },
+                    headers: { 'Content-Type': 'application/json' }, // Geen x-goog-api-key meer om CORS preflight te voorkomen
                     body: JSON.stringify(payload)
                 });
 
                 var resultaat = await response.json();
                 if (!response.ok) { throw new Error(resultaat.error?.message || 'De AI weigert de verbinding.'); }
 
-                var aiTekst = resultaat.candidates[0].content.parts[0].text;
+                var aiTekst = resultaat.candidates[0].content.parts[0].text; // Update naar exacte Google JSON structuur
                 var data = JSON.parse(aiTekst);
 
-                // Vul de invoervelden op het scherm
                 document.getElementById('naam').value = data.naam || '';
                 document.getElementById('geboortedatum').value = data.geboortedatum || '';
                 document.getElementById('adres').value = data.adres || '';
@@ -196,7 +188,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert('Er ging iets mis tijdens de analyse: ' + error.message);
+                alert('Er ging iets mis tijdens de AI-analyse: ' + error.message);
             } finally {
                 scanBtn.disabled = false;
                 loadingText.style.display = 'none';
@@ -205,3 +197,4 @@
     </script>
 </body>
 </html>
+
