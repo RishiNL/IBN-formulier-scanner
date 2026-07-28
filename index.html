@@ -3,109 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Formulier Scanner - Nieuwe Pagina</title>
+    <title>Lok Installaties - AI Formulier Scanner</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; color: #333; }
-        h2 { color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
+        :root {
+            --lok-blue: #002e5d; /* Huisstijl blauw */
+            --lok-green: #2e7d32; /* Duurzaam groen accent */
+            --lok-gray: #f4f7f6;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 600px; 
+            margin: 40px auto; 
+            padding: 20px; 
+            background-color: var(--lok-gray);
+            color: #333;
+        }
+        .header {
+            background-color: var(--lok-blue);
+            color: white;
+            padding: 20px;
+            border-radius: 6px 6px 0 0;
+            text-align: center;
+        }
+        .header h1 { margin: 0; font-size: 22px; }
+        .header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.8; }
+        .card { 
+            background: #fff; 
+            padding: 25px; 
+            border-radius: 0 0 6px 6px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        h2 { 
+            color: var(--lok-blue); 
+            border-bottom: 2px solid #ddd; 
+            padding-bottom: 6px; 
+            margin-top: 25px; 
+            font-size: 18px;
+        }
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        button { background-color: #28a745; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #loading { color: #666; display: none; margin-top: 12px; font-weight: bold; text-align: center; }
-        .setup-box { background: #fff; padding: 20px; border-radius: 6px; border-left: 5px solid #007bff; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .main-form { background: #fff; padding: 25px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        input[type="text"], input[type="password"] { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-size: 14px;
+        }
+        input:focus {
+            border-color: var(--lok-blue);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0,46,93,0.2);
+        }
+        .btn-scan {
+            background-color: var(--lok-green);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .btn-scan:hover { background-color: #1b5e20; }
+        .btn-scan:disabled { background-color: #ccc; cursor: not-allowed; }
+        #loading { 
+            color: var(--lok-blue); 
+            display: none; 
+            margin-top: 15px; 
+            font-weight: bold; 
+            text-align: center;
+            background: #e1f5fe;
+            padding: 10px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="setup-box">
-        <h2>1. Instellingen</h2>
-        <div class="form-group">
-            <label for="apiKeyInput">Jouw Gemini API Sleutel:</label>
-            <input type="password" id="apiKeyInput" placeholder="Plak hier je Gemini API sleutel">
-        </div>
+    <div class="header">
+        <h1>Lok Installaties</h1>
+        <p>Innovatieve technische oplossingen & AI automatisering</p>
     </div>
 
-    <div class="main-form">
-        <h2>2. Foto Scannen</h2>
+    <div class="card">
+        <h2>1. API Instellingen</h2>
         <div class="form-group">
-            <label for="fotoInput">Selecteer of maak een foto van een document:</label>
+            <label for="apiKeyInput">Jouw Gemini API Sleutel (begint met AQ.):</label>
+            <input type="password" id="apiKeyInput" placeholder="Plak hier de sleutel van Google AI Studio">
+        </div>
+
+        <h2>2. Document of Label Scannen</h2>
+        <div class="form-group">
+            <label for="fotoInput">Selecteer een foto/screenshot:</label>
             <input type="file" id="fotoInput" accept="image/*">
         </div>
-        <button id="scanButton" onclick="scanFotoDirect()">Scan Foto & Vul In</button>
-        <div id="loading">AI verwerkt de foto...</div>
+        <button id="scanBtn" class="btn-scan" onclick="startLokAIAnalyse()">Scan Foto & Vul Formulier In</button>
+        
+        <div id="loading">Lok AI analyseert de afbeelding... Een moment geduld.</div>
 
-        <h2>3. Resultaat</h2>
+        <h2>3. Ingevulde Technische Gegevens</h2>
         <form id="doelFormulier">
-            <div class="form-group"><label for="naam">Volledige naam:</label><input type="text" id="naam"></div>
-            <div class="form-group"><label for="geboortedatum">Geboortedatum:</label><input type="text" id="geboortedatum"></div>
-            <div class="form-group"><label for="adres">Adres:</label><input type="text" id="adres"></div>
+            <div class="form-group"><label for="naam">Volledige naam / Klant:</label><input type="text" id="naam"></div>
+            <div class="form-group"><label for="geboortedatum">Geboortedatum / Datum:</label><input type="text" id="geboortedatum"></div>
+            <div class="form-group"><label for="adres">Adres / Locatie:</label><input type="text" id="adres"></div>
             <div class="form-group"><label for="telefoon">Telefoonnummer:</label><input type="text" id="telefoon"></div>
-            <div class="form-group"><label for="serienummer">Serienummer:</label><input type="text" id="serienummer"></div>
-            <div class="form-group"><label for="id_nummer">ID-nummer:</label><input type="text" id="id_nummer"></div>
+            <div class="form-group"><label for="serienummer">Serienummer (S/N):</label><input type="text" id="serienummer"></div>
+            <div class="form-group"><label for="id_nummer">ID-nummer / Documentnummer:</label><input type="text" id="id_nummer"></div>
         </form>
     </div>
 
     <script>
+        // Automatisch de opgeslagen sleutel ophalen bij openen
         document.addEventListener("DOMContentLoaded", function() {
-            var savedKey = localStorage.getItem("gemini_api_key");
+            var savedKey = localStorage.getItem("lok_secure_key");
             if (savedKey) { document.getElementById('apiKeyInput').value = savedKey; }
         });
 
+        // Veilig omzetten naar Base64 string (Fix voor parameter 1 is not of type 'Blob')
         function fileToBase64(file) {
             return new Promise(function(resolve, reject) {
                 var reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = function() { resolve(reader.result.split(',')[1]); };
+                reader.onload = function() { resolve(reader.result.split(',')[1]); }; // Pak puur en alleen de data
                 reader.onerror = function(error) { reject(error); };
             });
         }
 
-        async function scanFotoDirect() {
+        async function startLokAIAnalyse() {
             var fileInput = document.getElementById('fotoInput');
-            var apiKey = document.getElementById('apiKeyInput').value.trim();
-            var scanButton = document.getElementById('scanButton');
+            var apiKeyInput = document.getElementById('apiKeyInput');
             var loadingText = document.getElementById('loading');
+            var scanBtn = document.getElementById('scanBtn');
 
-            if (!apiKey || fileInput.files.length === 0) {
-                alert('Vul je sleutel in en selecteer een foto.');
-                return;
-            }
+            var cleanKey = apiKeyInput.value.trim();
 
-            localStorage.setItem("gemini_api_key", apiKey);
-            scanButton.disabled = true;
+            if (!cleanKey) { alert('Vul eerst je Gemini API-sleutel in bij stap 1.'); return; }
+            if (!fileInput.files || fileInput.files.length === 0) { alert('Selecteer eerst een foto.'); return; }
+
+            // Sla de sleutel veilig op in de browsercache
+            localStorage.setItem("lok_secure_key", cleanKey);
+            
+            scanBtn.disabled = true;
             loadingText.style.display = 'block';
 
             try {
-                var file = fileInput.files[0];
-                var base64Data = await fileToBase64(file);
-                var promptTekst = "Analyseer dit document en geef de data strikt terug in dit JSON-formaat: {\"naam\":\"\",\"geboortedatum\":\"\",\"adres\":\"\",\"telefoon\":\"\",\"serienummer\":\"\",\"id_nummer\":\"\"}";
+                // OMZEILING & FIX: Pak specifiek de eerste geselecteerde foto uit de lijst [0]
+                var targetFile = fileInput.files[0]; 
+                var base64Data = await fileToBase64(targetFile);
+
+                var promptTekst = "Analyseer dit document. Haal de gevraagde gegevens op en geef ze ALTIJD terug in dit exacte JSON-formaat: " +
+                "{\"naam\": \"\", \"geboortedatum\": \"\", \"adres\": \"\", \"telefoon\": \"\", \"serienummer\": \"\", \"id_nummer\": \"\"}. " +
+                "Als een gegeven niet vindbaar is op de foto, laat je de waarde leeg (\"\"). Verzin nooit zelf data.";
 
                 var payload = {
                     contents: [{
                         parts: [
                             { text: promptTekst },
-                            { inlineData: { mimeType: file.type, data: base64Data } }
+                            { inlineData: { mimeType: targetFile.type, data: base64Data } }
                         ]
                     }],
                     generationConfig: { responseMimeType: "application/json" }
                 };
 
-                // Correcte URL naar de Google API
-                var url = "https://googleapis.com" + apiKey;
+                // OMZEILING: De URL is 100% statisch. Geen risico op foutieve string-koppelingen.
+                var url = "https://googleapis.com";
 
                 var response = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': cleanKey // Sleutel wordt veilig via de HTTP-header meegestuurd
+                    },
                     body: JSON.stringify(payload)
                 });
 
                 var resultaat = await response.json();
-                if (!response.ok) { throw new Error(resultaat.error?.message || 'API Fout'); }
+                if (!response.ok) { throw new Error(resultaat.error?.message || 'De AI weigert de verbinding.'); }
 
-                var data = JSON.parse(resultaat.candidates[0].content.parts[0].text);
+                var aiTekst = resultaat.candidates[0].content.parts[0].text;
+                var data = JSON.parse(aiTekst);
 
+                // Vul de invoervelden op het scherm
                 document.getElementById('naam').value = data.naam || '';
                 document.getElementById('geboortedatum').value = data.geboortedatum || '';
                 document.getElementById('adres').value = data.adres || '';
@@ -115,9 +196,9 @@
 
             } catch (error) {
                 console.error(error);
-                alert('Fout tijdens scannen: ' + error.message);
+                alert('Er ging iets mis tijdens de analyse: ' + error.message);
             } finally {
-                scanButton.disabled = false;
+                scanBtn.disabled = false;
                 loadingText.style.display = 'none';
             }
         }
